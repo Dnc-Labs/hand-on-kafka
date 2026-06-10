@@ -1,0 +1,39 @@
+# Maven
+target/
+*.jar
+*.war
+!.mvn/wrapper/maven-wrapper.jar
+dependency-reduced-pom.xml
+
+# Java
+*.class
+hs_err_pid*
+replay_pid*
+
+# IDE
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+.settings/
+.project
+.classpath
+.factorypath
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs & local env
+*.log
+.env
+.env.local
+
+# Claude Code local/personal settings (không commit lên remote)
+.claude/settings.local.json
+
+# Kafka / Docker volumes (dữ liệu local, không commit)
+**/kafka-data/
+**/zk-data/
+volumes/

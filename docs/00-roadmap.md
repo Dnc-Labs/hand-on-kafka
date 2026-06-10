@@ -15,12 +15,17 @@ Ký hiệu trạng thái: ⬜ chưa học · 🟡 đang học · ✅ xong
 - ✅ 0.5 Thiết kế domain Banking/Wallet: bounded context, các service & event chính
 
 ## MODULE 1 — Kafka Core Concepts (lý thuyết sâu)
-- ⬜ 1.1 Kiến trúc tổng quan: broker, controller (KRaft), topic, partition, offset, segment
-- ⬜ 1.2 Replication: leader/follower, ISR, `acks`, `min.insync.replicas`, độ bền dữ liệu
-- ⬜ 1.3 Producer internals: partitioner, batching, `linger.ms`, compression, idempotent producer
-- ⬜ 1.4 Consumer internals: consumer group, rebalance, offset commit, assignment strategy
-- ⬜ 1.5 Delivery semantics: at-most-once / at-least-once / exactly-once, transactions
-- ⬜ 1.6 Log retention & compaction, tiered storage
+- ✅ 1.1 Kiến trúc tổng quan: broker, controller (KRaft), topic, partition, offset, segment
+  - Hỏi đáp: số partition nên đặt bao nhiêu? · cần thứ tự tuyệt đối toàn topic thì làm thế nào?
+- ✅ 1.2 Replication: leader/follower, ISR, `acks`, `min.insync.replicas`, độ bền dữ liệu
+  - Hỏi đáp: RF=3 có tốn gấp 3 đĩa? · so với DB tự replicate khác gì?
+- ✅ 1.3 Producer internals: partitioner, batching, `linger.ms`, compression, idempotent producer
+  - Hỏi đáp: PID có sống sót khi producer restart không?
+- ✅ 1.4 Consumer internals: consumer group, rebalance, offset commit, assignment strategy
+  - Hỏi đáp: replay từ thời điểm quá khứ làm thế nào? · quan sát offset/lag bằng tool nào (Kafka UI + Prometheus/Grafana)?
+- ✅ 1.5 Delivery semantics: at-most-once / at-least-once / exactly-once, transactions
+  - Hỏi đáp: Outbox vs Kafka transactions khác nhau thế nào, sao không dùng transactions cho DB?
+- ✅ 1.6 Log retention & compaction, tiered storage (stream–table duality)
 
 ## MODULE 2 — Dựng hạ tầng (thực hành đầu tiên)
 - ⬜ 2.1 Docker Compose: cluster 3 broker KRaft + Schema Registry + Kafka UI
