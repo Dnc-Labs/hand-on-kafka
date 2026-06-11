@@ -28,9 +28,9 @@ Ký hiệu trạng thái: ⬜ chưa học · 🟡 đang học · ✅ xong
 - ✅ 1.6 Log retention & compaction, tiered storage (stream–table duality)
 
 ## MODULE 2 — Dựng hạ tầng (thực hành đầu tiên)
-- ⬜ 2.1 Docker Compose: cluster 3 broker KRaft + Schema Registry + Kafka UI
-- ⬜ 2.2 Kafka CLI: tạo topic, produce/consume, mô tả cluster
-- ⬜ 2.3 Khởi tạo project: multi-module Maven + Spring Boot skeleton
+- ✅ 2.1 Docker Compose: cluster 3 broker KRaft + Schema Registry + Kafka UI (đã verify: quorum [1,2,3] healthy)
+- ✅ 2.2 Kafka CLI: tạo topic, produce/consume, mô tả cluster (demo key→partition & consumer lag)
+- ✅ 2.3 Khởi tạo project: multi-module Maven + Spring Boot skeleton (build + boot verified, port 8090)
 
 ## MODULE 3 — Schema & Serialization
 - ⬜ 3.1 Avro & Schema Registry: subject, schema id, wire format

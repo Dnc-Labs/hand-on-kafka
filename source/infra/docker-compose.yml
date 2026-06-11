@@ -1,0 +1,161 @@
+# =============================================================================
+#  CLUSTER KAFKA LOCAL CHO VIỆC HỌC — Banking/Wallet
+# =============================================================================
+#  3 broker (KRaft, kiêm controller) + Schema Registry + Kafka UI.
+#
+#  ⚠️ ĐÂY LÀ MÔI TRƯỜNG LOCAL/HỌC TẬP. Phần cấu hình ĐỘ BỀN (replication factor,
+#     min insync) là PROD-GRADE và mang lên prod được. Nhưng cách đóng gói là LOCAL:
+#       - PLAINTEXT (không TLS/SASL) → PROD bắt buộc mã hóa + xác thực (Module 8.3)
+#       - 3 broker trên 1 máy        → PROD là 3 node/máy khác nhau (khác AZ)
+#       - Docker Compose             → PROD thường là Kubernetes/Strimzi hoặc managed
+#  Các dòng đánh dấu [LOCAL] là tiện ích cho việc học, sẽ khác khi lên thật.
+# =============================================================================
+
+name: banking-kafka-local
+
+# --- YAML anchor: gom cấu hình chung của 3 broker để khỏi lặp (DRY) ---
+x-kafka-common: &kafka-common
+  image: confluentinc/cp-kafka:7.8.0
+  networks: [banking-net]
+  restart: unless-stopped
+  healthcheck:
+    # localhost:9092 là listener INTERNAL (bind 0.0.0.0) → kiểm tra broker đã sẵn sàng
+    test: ["CMD", "kafka-broker-api-versions", "--bootstrap-server", "localhost:9092"]
+    interval: 10s
+    timeout: 5s
+    retries: 15
+    start_period: 20s
+
+x-kafka-env: &kafka-env
+  CLUSTER_ID: 'MkU3OEVBNTcwNTJENDM2Qk'          # id chung cho cả cluster (cả 3 broker giống nhau)
+  KAFKA_PROCESS_ROLES: 'broker,controller'      # KRaft: mỗi node vừa broker vừa controller
+  KAFKA_CONTROLLER_QUORUM_VOTERS: '1@kafka1:9093,2@kafka2:9093,3@kafka3:9093'
+  KAFKA_CONTROLLER_LISTENER_NAMES: 'CONTROLLER'
+  # map từng listener → giao thức bảo mật. [LOCAL] tất cả PLAINTEXT; PROD: dùng SSL/SASL_SSL
+  KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: 'CONTROLLER:PLAINTEXT,INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT'
+  KAFKA_INTER_BROKER_LISTENER_NAME: 'INTERNAL'  # broker↔broker đi qua listener INTERNAL
+
+  # ----- ĐỘ BỀN: PROD-GRADE (đúng khẩu quyết Bài 1.2) -----
+  KAFKA_DEFAULT_REPLICATION_FACTOR: 3
+  KAFKA_MIN_INSYNC_REPLICAS: 2
+  KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 3            # topic __consumer_offsets
+  KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 3    # topic transaction state (cho EOS)
+  KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 2
+  KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'false'             # PROD-GRADE: tạo topic tường minh, không tự sinh
+
+  # ----- [LOCAL] tiện ích cho việc học -----
+  KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0            # [LOCAL] consumer group khởi động nhanh; PROD để mặc định 3000
+
+services:
+  # ===========================================================================
+  #  BROKER 1
+  # ===========================================================================
+  kafka1:
+    <<: *kafka-common
+    container_name: kafka1
+    hostname: kafka1
+    ports:
+      - "19092:19092"                          # EXTERNAL: app trên host nối qua localhost:19092
+    environment:
+      <<: *kafka-env
+      KAFKA_NODE_ID: 1
+      # LISTENERS bind 0.0.0.0 (nghe mọi interface trong container)
+      KAFKA_LISTENERS: 'INTERNAL://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093,EXTERNAL://0.0.0.0:19092'
+      # ADVERTISED = địa chỉ broker "tự giới thiệu" cho client kết nối lại:
+      #   INTERNAL→ container khác dùng "kafka1"; EXTERNAL→ host dùng "localhost"
+      KAFKA_ADVERTISED_LISTENERS: 'INTERNAL://kafka1:9092,EXTERNAL://localhost:19092'
+    volumes:
+      - kafka1-data:/var/lib/kafka/data
+
+  # ===========================================================================
+  #  BROKER 2
+  # ===========================================================================
+  kafka2:
+    <<: *kafka-common
+    container_name: kafka2
+    hostname: kafka2
+    ports:
+      - "19093:19093"
+    environment:
+      <<: *kafka-env
+      KAFKA_NODE_ID: 2
+      KAFKA_LISTENERS: 'INTERNAL://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093,EXTERNAL://0.0.0.0:19093'
+      KAFKA_ADVERTISED_LISTENERS: 'INTERNAL://kafka2:9092,EXTERNAL://localhost:19093'
+    volumes:
+      - kafka2-data:/var/lib/kafka/data
+
+  # ===========================================================================
+  #  BROKER 3
+  # ===========================================================================
+  kafka3:
+    <<: *kafka-common
+    container_name: kafka3
+    hostname: kafka3
+    ports:
+      - "19094:19094"
+    environment:
+      <<: *kafka-env
+      KAFKA_NODE_ID: 3
+      KAFKA_LISTENERS: 'INTERNAL://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093,EXTERNAL://0.0.0.0:19094'
+      KAFKA_ADVERTISED_LISTENERS: 'INTERNAL://kafka3:9092,EXTERNAL://localhost:19094'
+    volumes:
+      - kafka3-data:/var/lib/kafka/data
+
+  # ===========================================================================
+  #  SCHEMA REGISTRY — lưu & quản Avro schema (Module 3)
+  # ===========================================================================
+  schema-registry:
+    image: confluentinc/cp-schema-registry:7.8.0
+    container_name: schema-registry
+    hostname: schema-registry
+    networks: [banking-net]
+    restart: unless-stopped
+    depends_on:
+      kafka1: { condition: service_healthy }
+      kafka2: { condition: service_healthy }
+      kafka3: { condition: service_healthy }
+    ports:
+      - "8081:8081"
+    environment:
+      SCHEMA_REGISTRY_HOST_NAME: schema-registry
+      # Schema Registry là client của Kafka → nối qua listener INTERNAL
+      SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: 'kafka1:9092,kafka2:9092,kafka3:9092'
+      SCHEMA_REGISTRY_LISTENERS: 'http://0.0.0.0:8081'
+      SCHEMA_REGISTRY_KAFKASTORE_TOPIC_REPLICATION_FACTOR: 3   # topic _schemas cũng RF=3
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/subjects"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+  # ===========================================================================
+  #  KAFKA UI — nhìn trực quan topic/partition/offset/lag (Provectus/Kafbat)
+  #  [LOCAL] công cụ dev/staging — PROD phải bọc auth/RBAC/HTTPS (Bài 1.4)
+  # ===========================================================================
+  kafka-ui:
+    image: ghcr.io/kafbat/kafka-ui:latest
+    container_name: kafka-ui
+    networks: [banking-net]
+    restart: unless-stopped
+    depends_on:
+      kafka1: { condition: service_healthy }
+      schema-registry: { condition: service_healthy }
+    ports:
+      - "8080:8080"
+    environment:
+      KAFKA_CLUSTERS_0_NAME: banking-local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: 'kafka1:9092,kafka2:9092,kafka3:9092'
+      KAFKA_CLUSTERS_0_SCHEMAREGISTRY: 'http://schema-registry:8081'
+      DYNAMIC_CONFIG_ENABLED: 'true'
+
+networks:
+  banking-net:
+    driver: bridge
+
+# Named volumes: dữ liệu broker tồn tại qua các lần restart.
+# Muốn xóa sạch (reset cluster): docker compose down -v
+volumes:
+  kafka1-data:
+  kafka2-data:
+  kafka3-data:

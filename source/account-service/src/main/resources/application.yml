@@ -1,0 +1,20 @@
+server:
+  # Port 8090 (tránh 8080 = Kafka UI, 8081 = Schema Registry)
+  port: 8090
+
+spring:
+  application:
+    name: account-service
+  kafka:
+    # App chạy trên HOST → nối qua listener EXTERNAL (Bài 2.1)
+    bootstrap-servers: localhost:19092,localhost:19093,localhost:19094
+
+# Actuator: mở health + metrics (chuẩn bị Module 8)
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info, metrics
+  endpoint:
+    health:
+      show-details: always

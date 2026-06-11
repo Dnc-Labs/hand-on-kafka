@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <!-- Kế thừa BOM của Spring Boot (quản version cho spring-kafka, jackson, junit...) -->
+  <parent>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-parent</artifactId>
+    <version>3.4.1</version>
+    <relativePath/>
+  </parent>
+
+  <groupId>com.dnclabs.banking</groupId>
+  <artifactId>banking-parent</artifactId>
+  <version>0.0.1-SNAPSHOT</version>
+  <packaging>pom</packaging>           <!-- packaging=pom: đây là parent/aggregator, không phải app -->
+  <name>banking-parent</name>
+  <description>Hệ Banking/Wallet — học Kafka &amp; event-driven microservices</description>
+
+  <properties>
+    <java.version>21</java.version>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <!-- Confluent (Avro serializer + Schema Registry client) — dùng từ Module 3 -->
+    <confluent.version>7.8.0</confluent.version>
+    <avro.version>1.12.0</avro.version>
+  </properties>
+
+  <!-- Aggregator: các module con build cùng. Thêm dần service khi tới bài của nó. -->
+  <modules>
+    <module>common-events</module>
+    <module>account-service</module>
+  </modules>
+
+  <!-- Quản version tập trung cho dependency Confluent (con chỉ khai báo, không ghi version) -->
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>io.confluent</groupId>
+        <artifactId>kafka-avro-serializer</artifactId>
+        <version>${confluent.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.avro</groupId>
+        <artifactId>avro</artifactId>
+        <version>${avro.version}</version>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+
+  <!-- Repo của Confluent (kafka-avro-serializer KHÔNG có trên Maven Central) -->
+  <repositories>
+    <repository>
+      <id>confluent</id>
+      <url>https://packages.confluent.io/maven/</url>
+    </repository>
+  </repositories>
+  <pluginRepositories>
+    <pluginRepository>
+      <id>confluent</id>
+      <url>https://packages.confluent.io/maven/</url>
+    </pluginRepository>
+  </pluginRepositories>
+</project>
