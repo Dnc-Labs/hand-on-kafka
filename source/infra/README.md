@@ -11,7 +11,7 @@ Cluster Kafka cho việc học: **3 broker (KRaft) + Schema Registry + Kafka UI*
 | Kafka broker 1 | `localhost:19092` | bootstrap server cho app (Spring) |
 | Kafka broker 2 | `localhost:19093` | bootstrap server |
 | Kafka broker 3 | `localhost:19094` | bootstrap server |
-| Schema Registry | http://localhost:8081 | quản Avro schema |
+| Schema Registry | http://localhost:8061 | quản Avro schema (host 8061 -> container 8081) |
 | Kafka UI | http://localhost:8080 | nhìn trực quan topic/partition/offset/lag |
 
 App chạy trên host nên dùng: `bootstrap.servers = localhost:19092,localhost:19093,localhost:19094`

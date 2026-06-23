@@ -115,7 +115,8 @@ services:
       kafka2: { condition: service_healthy }
       kafka3: { condition: service_healthy }
     ports:
-      - "8081:8081"
+      # Host 8061 (tránh đụng 8081 đang dùng nhiều trên máy) -> container vẫn 8081
+      - "8061:8081"
     environment:
       SCHEMA_REGISTRY_HOST_NAME: schema-registry
       # Schema Registry là client của Kafka → nối qua listener INTERNAL

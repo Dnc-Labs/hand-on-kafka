@@ -1,0 +1,57 @@
+{
+  "type": "record",
+  "name": "MoneyCredited",
+  "namespace": "com.dnclabs.banking.events",
+  "doc": "Event phát ra khi MỘT tài khoản nhận tiền trong luồng chuyển tiền. Producer: account-service. Topic: banking.account.credited (key = accountId).",
+  "fields": [
+    {
+      "name": "eventId",
+      "type": "string",
+      "doc": "ID duy nhất của event (UUID). Dùng cho idempotent consumer chống xử lý trùng (Module 5)."
+    },
+    {
+      "name": "transferId",
+      "type": "string",
+      "doc": "ID giao dịch chuyển tiền mà credit này thuộc về. Dùng để correlate các event trong cùng một Saga (Module 6)."
+    },
+    {
+      "name": "accountId",
+      "type": "string",
+      "doc": "Tài khoản nhận tiền. Đây cũng là MESSAGE KEY của topic -> cùng account vào cùng partition -> giữ thứ tự tuyệt đối cho account (Bài 1.1)."
+    },
+    {
+      "name": "amount",
+      "type": {
+        "type": "bytes",
+        "logicalType": "decimal",
+        "precision": 18,
+        "scale": 2
+      },
+      "doc": "Số tiền nhận. decimal(18,2) -> java.math.BigDecimal. KHÔNG bao giờ dùng double cho tiền."
+    },
+    {
+      "name": "currency",
+      "type": "string",
+      "default": "VND",
+      "doc": "Mã tiền tệ ISO-4217 (vd VND, USD). Có default để dễ tiến hóa schema (Bài 3.2)."
+    },
+    {
+      "name": "balanceAfter",
+      "type": {
+        "type": "bytes",
+        "logicalType": "decimal",
+        "precision": 18,
+        "scale": 2
+      },
+      "doc": "Số dư của tài khoản SAU khi cộng/nhận tiền. Phục vụ audit / dựng lại trạng thái."
+    },
+    {
+      "name": "occurredAt",
+      "type": {
+        "type": "long",
+        "logicalType": "timestamp-millis"
+      },
+      "doc": "Thời điểm nghiệp vụ xảy ra (epoch millis, UTC). logical type timestamp-millis -> java.time.Instant."
+    }
+  ]
+}

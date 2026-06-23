@@ -1,5 +1,5 @@
 server:
-  # Port 8090 (tránh 8080 = Kafka UI, 8081 = Schema Registry)
+  # Port 8090 (tránh 8080 = Kafka UI, 8061 = Schema Registry)
   port: 8090
 
 spring:

@@ -33,9 +33,11 @@ Ký hiệu trạng thái: ⬜ chưa học · 🟡 đang học · ✅ xong
 - ✅ 2.3 Khởi tạo project: multi-module Maven + Spring Boot skeleton (build + boot verified, port 8090)
 
 ## MODULE 3 — Schema & Serialization
-- ⬜ 3.1 Avro & Schema Registry: subject, schema id, wire format
-- ⬜ 3.2 Compatibility & schema evolution: backward / forward / full
-- ⬜ 3.3 Sinh code từ Avro schema (Maven plugin), quản lý schema trong repo
+- ✅ 3.1 Avro & Schema Registry: subject, schema id, wire format
+  - Hỏi đáp: Schema Registry chết thì producer/consumer còn chạy không? · vì sao subject mặc định theo topic, khi nào đổi strategy? · subject scope thuộc Kafka hay Avro? · sao không dùng DTO chung thay Schema Registry? · Avro có bắt buộc cần Schema Registry không?
+- ✅ 3.2 Compatibility & schema evolution: backward / forward / full / transitive
+  - Hỏi đáp: banking chọn mode nào (BACKWARD_TRANSITIVE mặc định, FULL_TRANSITIVE cho public contract) + governance 3 lớp · (còn 2 câu gợi mở tùy chọn: topic versioning cho breaking change; default áp writer hay reader)
+- ✅ 3.3 Sinh code từ Avro schema (avro-maven-plugin), 2 contract đầu (MoneyDebited/MoneyCredited), đăng ký Registry + set BACKWARD_TRANSITIVE, demo chặn breaking change, kafka-schema-registry-maven-plugin cho CI/CD
 
 ## MODULE 4 — Producer thực hành (production-grade)
 - ⬜ 4.1 Spring Kafka producer: cấu hình prod-grade (idempotence, `acks=all`)

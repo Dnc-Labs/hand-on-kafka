@@ -22,5 +22,55 @@
       <artifactId>avro</artifactId>
     </dependency>
   </dependencies>
-  <!-- Module 3 sẽ thêm avro-maven-plugin để sinh code Java từ .avsc -->
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.avro</groupId>
+        <artifactId>avro-maven-plugin</artifactId>
+        <version>${avro.version}</version>
+        <executions>
+          <execution>
+            <phase>generate-sources</phase>
+            <goals>
+              <goal>schema</goal>            <!-- sinh class từ .avsc -->
+            </goals>
+            <configuration>
+              <!-- Nơi đặt .avsc -->
+              <sourceDirectory>${project.basedir}/src/main/avro</sourceDirectory>
+              <!-- Nơi xuất code sinh ra (mặc định cũng là đây, ghi rõ cho minh bạch) -->
+              <outputDirectory>${project.build.directory}/generated-sources/avro</outputDirectory>
+
+              <!-- QUAN TRỌNG: sinh java.lang.String thay vì CharSequence (dễ dùng hơn nhiều) -->
+              <stringType>String</stringType>
+              <!-- field để private + có getter/setter, gọn -->
+              <fieldVisibility>PRIVATE</fieldVisibility>
+              <!-- Cho phép logical type 'decimal' map sang BigDecimal (tiền tệ!) -->
+              <enableDecimalLogicalType>true</enableDecimalLogicalType>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <!-- Đăng ký & kiểm tra compatibility schema (CÁCH PROD — chạy trong CI/CD).
+           Goals dùng thủ công, KHÔNG bind vào build thường (tránh mỗi lần build lại push schema):
+             mvn io.confluent:kafka-schema-registry-maven-plugin:test-compatibility   (CI: chặn breaking change)
+             mvn io.confluent:kafka-schema-registry-maven-plugin:register             (deploy: đẩy schema lên Registry) -->
+      <plugin>
+        <groupId>io.confluent</groupId>
+        <artifactId>kafka-schema-registry-maven-plugin</artifactId>
+        <version>${confluent.version}</version>
+        <configuration>
+          <schemaRegistryUrls>
+            <param>${schema.registry.url}</param>
+          </schemaRegistryUrls>
+          <subjects>
+            <banking.account.debited-value>src/main/avro/com/dnclabs/banking/events/MoneyDebited.avsc</banking.account.debited-value>
+            <banking.account.credited-value>src/main/avro/com/dnclabs/banking/events/MoneyCredited.avsc</banking.account.credited-value>
+          </subjects>
+        </configuration>
+      </plugin>
+
+    </plugins>
+  </build>
 </project>
